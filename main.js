@@ -78,6 +78,17 @@ const server = http.createServer(async (req, res) => {
         }
         break;
 
+    case "DELETE":
+        try {
+            await fs.promises.unlink(filepath); // <-- fixed here
+            res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
+            res.end("Image deleted");
+        } catch (err) {
+            res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+            res.end("Image not found");
+        }
+        break;
+
     default:
         res.writeHead(405, { "Content-Type": "text/plain; charset=utf-8" });
         res.end("Method not allowed");
