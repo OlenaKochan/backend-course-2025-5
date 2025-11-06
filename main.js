@@ -49,30 +49,38 @@ const server = http.createServer(async (req, res) => {
   }
 
   switch (method) {
-
+    case "GET":
+        try {
+            const fileData = await fs.promises.readFile(filepath);
+            res.writeHead(200, { "Content-Type": "image/jpeg" });
+            res.end(fileData);
+        } catch (err) {
+            res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+            res.end("Image not found");
+        }
+        break;
 
     case "PUT":
-      try {
-        const chunks = [];
-        for await (const chunk of req) {
-          chunks.push(chunk);
+        try {
+            const chunks = [];
+            for await (const chunk of req) {
+                chunks.push(chunk);
+            }
+
+            const img = Buffer.concat(chunks);
+            await fs.promises.writeFile(filepath, img);
+
+            res.writeHead(201, { "Content-Type": "text/plain; charset=utf-8" });
+            res.end("Image saved to cache");
+        } catch (err) {
+            res.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" });
+            res.end("Error writing file");
         }
-        const img = Buffer.concat(chunks);
-        await fs.promises.writeFile(filepath, img);
-        res.writeHead(201, { "Content-Type": "text/plain; charset=utf-8" });
-        res.end("Image saved to cache");
-      } catch (err) {
-        res.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" });
-        res.end("Error writing file");
-      }
-      return; 
-
-
+        break;
 
     default:
-      res.writeHead(405, { "Content-Type": "text/plain; charset=utf-8" });
-      res.end("Method not allowed");
-      return;
+        res.writeHead(405, { "Content-Type": "text/plain; charset=utf-8" });
+        res.end("Method not allowed");
   }
 });
 
