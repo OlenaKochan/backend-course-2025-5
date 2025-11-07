@@ -45,20 +45,30 @@ const server = http.createServer(async (req, res) => {
 
   if (!/^\d+$/.test(code)) {
     res.writeHead(405, { "Content-Type": "text/plain; charset=utf-8" });
-    return res.end("Method not allowed");
+    return res.end("Invalid request (expected HTTP status code)");
   }
 
   switch (method) {
     case "GET":
-        try {
-            const fileData = await fs.promises.readFile(filepath);
-            res.writeHead(200, { "Content-Type": "image/jpeg" });
-            res.end(fileData);
-        } catch (err) {
-            res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
-            res.end("Image not found");
-        }
-        break;
+    try {
+        const fileData = await fs.promises.readFile(filepath);
+        res.writeHead(200, { "Content-Type": "image/jpeg" });
+        return res.end(fileData); 
+    } catch (err) {
+        console.log("Not found in cache. Trying http.cat ...");
+    }
+
+    try {
+        const catResponse = await superagent.get(`https://http.cat/${code}`);
+        await fs.promises.writeFile(filepath, catResponse.body);
+
+        res.writeHead(200, { "Content-Type": "image/jpeg" });
+        res.end(catResponse.body);
+    } catch (err) {
+        res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+        res.end("Image not found on server or http.cat");
+    }
+    break;
 
     case "PUT":
         try {
